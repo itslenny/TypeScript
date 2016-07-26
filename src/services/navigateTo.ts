@@ -193,7 +193,7 @@ namespace ts.NavigateTo {
             const container = <Declaration>getContainerNode(declaration);
             return {
                 name: rawItem.name,
-                kind: getNodeKind(declaration),
+                kind: NavigationBar.getNodeKind(declaration),
                 kindModifiers: getNodeModifiers(declaration),
                 matchKind: PatternMatchKind[rawItem.matchKind],
                 isCaseSensitive: rawItem.isCaseSensitive,
@@ -201,7 +201,7 @@ namespace ts.NavigateTo {
                 textSpan: createTextSpanFromBounds(declaration.getStart(), declaration.getEnd()),
                 // TODO(jfreeman): What should be the containerName when the container has a computed name?
                 containerName: container && container.name ? (<Identifier>container.name).text : "",
-                containerKind: container && container.name ? getNodeKind(container) : ""
+                containerKind: container && container.name ? NavigationBar.getNodeKind(container) : ""
             };
         }
     }

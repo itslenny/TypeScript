@@ -539,57 +539,6 @@ namespace ts.NavigationBar {
         }
     }
 
-    // TODO: GH#9145: We should just use getNodeKind. No reason why navigationBar and navigateTo should have different behaviors.
-    function nodeKind(node: Node): string {
-        switch (node.kind) {
-            case SyntaxKind.SourceFile:
-                return ScriptElementKind.moduleElement;
-
-            case SyntaxKind.EnumMember:
-                return ScriptElementKind.memberVariableElement;
-
-            case SyntaxKind.VariableDeclaration:
-            case SyntaxKind.BindingElement:
-                let variableDeclarationNode: Node;
-                let name: Node;
-
-                if (node.kind === SyntaxKind.BindingElement) {
-                    name = (<BindingElement>node).name;
-                    variableDeclarationNode = node;
-                    // binding elements are added only for variable declarations
-                    // bubble up to the containing variable declaration
-                    while (variableDeclarationNode && variableDeclarationNode.kind !== SyntaxKind.VariableDeclaration) {
-                        variableDeclarationNode = variableDeclarationNode.parent;
-                    }
-                    Debug.assert(!!variableDeclarationNode);
-                }
-                else {
-                    Debug.assert(!isBindingPattern((<VariableDeclaration>node).name));
-                    variableDeclarationNode = node;
-                    name = (<VariableDeclaration>node).name;
-                }
-
-                if (isConst(variableDeclarationNode)) {
-                    return ts.ScriptElementKind.constElement;
-                }
-                else if (isLet(variableDeclarationNode)) {
-                    return ts.ScriptElementKind.letElement;
-                }
-                else {
-                    return ts.ScriptElementKind.variableElement;
-                }
-
-            case SyntaxKind.ArrowFunction:
-                return ts.ScriptElementKind.functionElement;
-
-            case SyntaxKind.JSDocTypedefTag:
-                return ScriptElementKind.typeElement;
-
-            default:
-                return getNodeKind(node);
-        }
-    }
-
     function getModuleName(moduleDeclaration: ModuleDeclaration): string {
         // We want to maintain quotation marks.
         if (isAmbientModule(moduleDeclaration)) {
@@ -656,5 +605,96 @@ namespace ts.NavigationBar {
 
     function isFunctionOrClassExpression(node: Node): boolean {
         return node.kind === SyntaxKind.FunctionExpression || node.kind === SyntaxKind.ArrowFunction || node.kind === SyntaxKind.ClassExpression;
+    }
+
+    //TODO: GH#9145: We should just use getNodeKind. No reason why navigationBar and navigateTo should have different behaviors.
+    function nodeKind(node: Node): string {
+        switch (node.kind) {
+            case SyntaxKind.VariableDeclaration:
+            case SyntaxKind.BindingElement:
+                let variableDeclarationNode: Node;
+                let name: Node;
+
+                if (node.kind === SyntaxKind.BindingElement) {
+                    name = (<BindingElement>node).name;
+                    variableDeclarationNode = node;
+                    // binding elements are added only for variable declarations
+                    // bubble up to the containing variable declaration
+                    while (variableDeclarationNode && variableDeclarationNode.kind !== SyntaxKind.VariableDeclaration) {
+                        variableDeclarationNode = variableDeclarationNode.parent;
+                    }
+                    Debug.assert(!!variableDeclarationNode);
+                }
+                else {
+                    Debug.assert(!isBindingPattern((<VariableDeclaration>node).name));
+                    variableDeclarationNode = node;
+                    name = (<VariableDeclaration>node).name;
+                }
+
+                if (isConst(variableDeclarationNode)) {
+                    return ts.ScriptElementKind.constElement;
+                }
+                else if (isLet(variableDeclarationNode)) {
+                    return ts.ScriptElementKind.letElement;
+                }
+                else {
+                    return ts.ScriptElementKind.variableElement;
+                }
+
+            default:
+                return getNodeKind(node);
+        }
+    }
+
+    //TODO: move this back to its old place in services.ts?
+    /* @internal */ export function getNodeKind(node: Node): string {
+        switch (node.kind) {
+            case SyntaxKind.JSDocTypedefTag:
+                return ScriptElementKind.typeElement;
+
+            case SyntaxKind.SourceFile:
+                return isExternalModule(<SourceFile> node) ? ScriptElementKind.moduleElement : ScriptElementKind.scriptElement;
+
+            case SyntaxKind.ModuleDeclaration:
+                return ScriptElementKind.moduleElement;
+            case SyntaxKind.ClassDeclaration:
+            case SyntaxKind.ClassExpression:
+                return ScriptElementKind.classElement;
+            case SyntaxKind.InterfaceDeclaration: return ScriptElementKind.interfaceElement;
+            case SyntaxKind.TypeAliasDeclaration: return ScriptElementKind.typeElement;
+            case SyntaxKind.EnumDeclaration: return ScriptElementKind.enumElement;
+            case SyntaxKind.VariableDeclaration:
+                return isConst(node)
+                    ? ScriptElementKind.constElement
+                    : isLet(node)
+                        ? ScriptElementKind.letElement
+                        : ScriptElementKind.variableElement;
+            case SyntaxKind.ArrowFunction:
+            case SyntaxKind.FunctionDeclaration:
+            case SyntaxKind.FunctionExpression:
+                return ScriptElementKind.functionElement;
+            case SyntaxKind.GetAccessor: return ScriptElementKind.memberGetAccessorElement;
+            case SyntaxKind.SetAccessor: return ScriptElementKind.memberSetAccessorElement;
+            case SyntaxKind.MethodDeclaration:
+            case SyntaxKind.MethodSignature:
+                return ScriptElementKind.memberFunctionElement;
+            case SyntaxKind.PropertyDeclaration:
+            case SyntaxKind.PropertySignature:
+                return ScriptElementKind.memberVariableElement;
+            case SyntaxKind.IndexSignature: return ScriptElementKind.indexSignatureElement;
+            case SyntaxKind.ConstructSignature: return ScriptElementKind.constructSignatureElement;
+            case SyntaxKind.CallSignature: return ScriptElementKind.callSignatureElement;
+            case SyntaxKind.Constructor: return ScriptElementKind.constructorImplementationElement;
+            case SyntaxKind.TypeParameter: return ScriptElementKind.typeParameterElement;
+            case SyntaxKind.EnumMember: return ScriptElementKind.enumMemberElement;
+            case SyntaxKind.Parameter: return (node.flags & NodeFlags.ParameterPropertyModifier) ? ScriptElementKind.memberVariableElement : ScriptElementKind.parameterElement;
+            case SyntaxKind.ImportEqualsDeclaration:
+            case SyntaxKind.ImportSpecifier:
+            case SyntaxKind.ImportClause:
+            case SyntaxKind.ExportSpecifier:
+            case SyntaxKind.NamespaceImport:
+                return ScriptElementKind.alias;
+        }
+        return ScriptElementKind.unknown;
     }
 }

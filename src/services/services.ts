@@ -1690,6 +1690,8 @@ namespace ts {
 
         /** enum E */
         export const enumElement = "enum";
+        //TODO
+        export const enumMemberElement = "const";
 
         /**
          * Inside module and script only
@@ -2943,49 +2945,6 @@ namespace ts {
                     return <Declaration>node;
             }
         }
-    }
-
-    /* @internal */ export function getNodeKind(node: Node): string {
-        switch (node.kind) {
-            case SyntaxKind.ModuleDeclaration: return ScriptElementKind.moduleElement;
-            case SyntaxKind.ClassDeclaration:
-            case SyntaxKind.ClassExpression:
-                return ScriptElementKind.classElement;
-            case SyntaxKind.InterfaceDeclaration: return ScriptElementKind.interfaceElement;
-            case SyntaxKind.TypeAliasDeclaration: return ScriptElementKind.typeElement;
-            case SyntaxKind.EnumDeclaration: return ScriptElementKind.enumElement;
-            case SyntaxKind.VariableDeclaration:
-                return isConst(node)
-                    ? ScriptElementKind.constElement
-                    : isLet(node)
-                        ? ScriptElementKind.letElement
-                        : ScriptElementKind.variableElement;
-            case SyntaxKind.FunctionDeclaration:
-            case SyntaxKind.FunctionExpression:
-                return ScriptElementKind.functionElement;
-            case SyntaxKind.GetAccessor: return ScriptElementKind.memberGetAccessorElement;
-            case SyntaxKind.SetAccessor: return ScriptElementKind.memberSetAccessorElement;
-            case SyntaxKind.MethodDeclaration:
-            case SyntaxKind.MethodSignature:
-                return ScriptElementKind.memberFunctionElement;
-            case SyntaxKind.PropertyDeclaration:
-            case SyntaxKind.PropertySignature:
-                return ScriptElementKind.memberVariableElement;
-            case SyntaxKind.IndexSignature: return ScriptElementKind.indexSignatureElement;
-            case SyntaxKind.ConstructSignature: return ScriptElementKind.constructSignatureElement;
-            case SyntaxKind.CallSignature: return ScriptElementKind.callSignatureElement;
-            case SyntaxKind.Constructor: return ScriptElementKind.constructorImplementationElement;
-            case SyntaxKind.TypeParameter: return ScriptElementKind.typeParameterElement;
-            case SyntaxKind.EnumMember: return ScriptElementKind.variableElement;
-            case SyntaxKind.Parameter: return (node.flags & NodeFlags.ParameterPropertyModifier) ? ScriptElementKind.memberVariableElement : ScriptElementKind.parameterElement;
-            case SyntaxKind.ImportEqualsDeclaration:
-            case SyntaxKind.ImportSpecifier:
-            case SyntaxKind.ImportClause:
-            case SyntaxKind.ExportSpecifier:
-            case SyntaxKind.NamespaceImport:
-                return ScriptElementKind.alias;
-        }
-        return ScriptElementKind.unknown;
     }
 
     class CancellationTokenObject implements CancellationToken {
